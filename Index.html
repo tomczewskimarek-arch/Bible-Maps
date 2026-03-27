@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Biblijne Mapy Historyczne — Interaktywna Oś Czasu</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#ede8dc;color:#2a1a08}
+.page{height:100vh;display:flex;flex-direction:column;padding:8px 12px 8px;max-width:1280px;margin:0 auto}
+header{flex-shrink:0;text-align:center;padding:4px 0 6px}
+header h1{font-size:18px;font-weight:700;color:#6a3a00;letter-spacing:.05em;margin-bottom:1px}
+header p{font-size:10.5px;color:#7a5a2a}
+.main{flex:1;min-height:0;display:flex;gap:12px;margin-bottom:8px}
+.map-wrap{flex:1;min-height:0;background:#c8d8a8;border-radius:14px;border:2px solid #a09060;overflow:hidden;position:relative;box-shadow:0 4px 18px rgba(80,60,20,.18)}
+#map{width:100%;height:100%;display:block}
+.info{width:255px;flex-shrink:0;background:#fdf8f0;border-radius:14px;border:1.5px solid #c0a860;padding:12px;display:flex;flex-direction:column;gap:7px;overflow-y:auto;box-shadow:0 2px 12px rgba(80,60,20,.10)}
+.info-badge{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8a5010;background:rgba(200,140,40,.15);padding:2px 9px;border-radius:10px;display:inline-block}
+.info-title{font-size:15px;font-weight:700;color:#2a1a08;line-height:1.25}
+.info-date{font-size:10.5px;color:#7a5030}
+.info-ref{font-size:10.5px;color:#8a5010;font-style:italic}
+.info-body{font-size:11px;color:#4a3020;line-height:1.65;border-left:2px solid #d0b060;padding-left:10px;flex:1}
+.info-places h4{font-size:9.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:#8a6a2a;margin-bottom:5px}
+.tag{display:inline-block;font-size:10px;padding:2px 6px;border-radius:7px;background:rgba(0,0,0,.06);border:.5px solid #c0a060;color:#4a3020;margin:2px}
+.tl-wrap{flex-shrink:0;background:#fdf8f0;border-radius:12px;border:1.5px solid #c0a860;padding:6px 10px;overflow-x:auto;box-shadow:0 2px 10px rgba(80,60,20,.08)}
+.tl{display:flex;gap:2px;min-width:max-content;align-items:flex-end}
+.tl-btn{cursor:pointer;padding:3px 6px;border-radius:6px;border:1.5px solid #c0a860;background:transparent;color:#7a5030;font-size:8.5px;font-family:inherit;white-space:nowrap;transition:all .18s;text-align:center;line-height:1.25;flex-shrink:0}
+.tl-btn:hover{background:rgba(180,120,20,.15)}
+.tl-btn.active{font-weight:700;background:rgba(180,120,20,.28);color:#5a2a00}
+.tl-sep{display:flex;flex-direction:column;align-items:center;margin:0 2px;flex-shrink:0}
+.tl-sep-line{width:1px;background:#c8b080;flex:1;min-height:16px}
+.tl-sep-label{font-size:7px;color:#8a6040;writing-mode:vertical-lr;transform:rotate(180deg);padding:2px 1px;opacity:.75;letter-spacing:.05em;font-weight:600}
+/* ERA COLORS */
+.e0{border-color:#6a8a58!important}
+.e1{border-color:#b08020!important}
+.e2{border-color:#c05010!important}
+.e3{border-color:#608030!important}
+.e4{border-color:#7040a0!important}
+.e5{border-color:#0062a8!important}
+.e6{border-color:#208080!important}
+.e7{border-color:#a02010!important}
+.e8{border-color:#2840a0!important}
+.base-water{fill:#5ba8e0;opacity:.78}
+.base-river{fill:none;stroke:#3d86c0;stroke-width:1.4;opacity:.88}
+.base-terrain{fill:#8aaa50;opacity:.26}
+.base-desert{fill:#d4aa50;opacity:.46}
+.base-label{fill:#2a2010;font-size:8px;font-style:italic;font-family:sans-serif}
+@media(max-width:780px){.main{flex-direction:column}.info{width:auto;max-height:200px}}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <h1>📜 Biblijne Mapy Historyczne — Interaktywna Oś Czasu</h1>
+  <p>40 okresów historycznych · od Stworzenia do Narodzin Mesjasza · Mapa zmienia kadr automatycznie</p>
+</header>
+<div class="main">
+  <div class="map-wrap">
+    <svg id="map" viewBox="0 0 820 580" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+        <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </marker>
+    </defs>
+
+    <!-- Ląd -->
+    <rect width="820" height="580" fill="#d8ca88"/>
+
+    <!-- Morze Śródziemne — wschodnie wybrzeże z półwyspem Karmel (x=279 przy y=285) -->
+    <polygon class="base-water" points="34,190 51,148 80,118 118,100 158,96 198,100 230,112 252,128 268,150 278,172 284,198 286,228 287,252 284,260 285,270 283,278 279,285 278,294 276,306 274,320 272,333 269,345 266,358 262,372 256,392 248,412 228,454 206,474 182,488 154,490 126,478 96,458 70,430 50,398 38,362 34,318 34,248"/>
+    <!-- Zatoka Sueska -->
+    <polygon class="base-water" points="188,462 208,458 220,524 200,528 184,466"/>
+    <!-- Zatoka Akaba -->
+    <polygon class="base-water" points="240,458 262,454 278,524 256,528 236,462"/>
+    <!-- Morze Czerwone -->
+    <polygon class="base-water" points="175,530 198,524 222,550 198,562 172,550" opacity=".4"/>
+    <!-- Zatoka Perska -->
+    <polygon class="base-water" points="624,458 664,452 708,490 720,550 672,554 630,514 616,470"/>
+    <!-- Morze Kaspijskie -->
+    <ellipse class="base-water" cx="700" cy="128" rx="26" ry="60" opacity=".7"/>
+    <!-- Morze Martwe: cx=303,cy=358,rx=10,ry=35 — W krawędź x=293, E krawędź x=313 -->
+    <ellipse class="base-water" cx="303" cy="358" rx="10" ry="35" opacity=".92"/>
+    <!-- Kinneret -->
+    <ellipse class="base-water" cx="305" cy="287" rx="7" ry="11" opacity=".88"/>
+    <!-- Hula -->
+    <ellipse class="base-water" cx="310" cy="263" rx="4" ry="6" opacity=".62"/>
+    <!-- Cypr -->
+    <ellipse fill="#90c8e0" cx="72" cy="168" rx="32" ry="16" opacity=".55"/>
+    <ellipse fill="#b8c870" cx="72" cy="168" rx="28" ry="12" opacity=".45"/>
+
+    <!-- Nil -->
+    <path class="base-river" d="M 152,152 L 154,218 L 153,278 L 152,340 L 150,376"/>
+    <path class="base-river" d="M 150,376 L 122,398 L 100,420 M 150,376 L 186,398 L 210,418"/>
+    <!-- Eufrat -->
+    <path class="base-river" d="M 412,130 C 440,182 466,236 494,280 C 522,325 556,370 596,418 L 630,474 L 646,550"/>
+    <!-- Tygrys -->
+    <path class="base-river" d="M 548,154 C 558,207 568,258 580,314 C 598,370 620,420 638,468 L 648,550"/>
+    <!-- Jordan: od Kinneret do Morza Martwego -->
+    <path class="base-river" d="M 305,298 C 307,308 306,315 305,319 C 304,321 303,322 303,323" stroke-width="1.6"/>
+    <!-- Jabbok -->
+    <path class="base-river" d="M 336,316 L 322,319 L 310,321 L 305,322" stroke-width="1" opacity=".72"/>
+    <!-- Jarmuk -->
+    <path class="base-river" d="M 338,292 L 324,293 L 310,293 L 305,294" stroke-width="1" opacity=".68"/>
+    <!-- Arnon -->
+    <path class="base-river" d="M 334,358 L 320,358 L 313,358" stroke-width="1" opacity=".72"/>
+    <!-- Zered -->
+    <path class="base-river" d="M 330,378 L 318,378 L 313,378" stroke-width=".9" opacity=".6"/>
+    <!-- Kiszon -->
+    <path class="base-river" d="M 276,286 L 283,290 L 290,293" stroke-width=".9" opacity=".65"/>
+    <!-- Orontes -->
+    <path class="base-river" d="M 328,236 L 338,218 L 350,196" stroke-width=".9" opacity=".58"/>
+    <!-- Litani -->
+    <path class="base-river" d="M 290,248 L 295,256 L 302,262" stroke-width=".8" opacity=".55"/>
+
+    <!-- Pustynie -->
+    <ellipse class="base-desert" cx="228" cy="494" rx="94" ry="54"/>
+    <ellipse class="base-desert" cx="498" cy="496" rx="122" ry="56"/>
+    <ellipse class="base-desert" cx="272" cy="416" rx="32" ry="26" opacity=".30"/>
+    <!-- Wyżyny -->
+    <ellipse class="base-terrain" cx="290" cy="344" rx="22" ry="32"/>
+    <ellipse class="base-terrain" cx="307" cy="270" rx="30" ry="24"/>
+    <ellipse class="base-terrain" cx="335" cy="274" rx="20" ry="30"/>
+    <ellipse class="base-terrain" cx="279" cy="288" rx="7" ry="14" opacity=".4"/>
+
+    <!-- Etykiety stałe -->
+    <text class="base-label" x="108" y="252" text-anchor="middle">Morze</text>
+    <text class="base-label" x="108" y="263" text-anchor="middle">Śródziemne</text>
+    <text class="base-label" x="303" y="352" text-anchor="middle" font-size="5.5" fill="#1a4a88">Morze</text>
+    <text class="base-label" x="303" y="360" text-anchor="middle" font-size="5.5" fill="#1a4a88">Martwe</text>
+    <text class="base-label" x="305" y="284" text-anchor="middle" font-size="5.5" fill="#1a5a88">Kinneret</text>
+    <text class="base-label" x="698" y="135" text-anchor="middle" font-size="7">M. Kaspijskie</text>
+    <text class="base-label" x="668" y="512" text-anchor="middle" font-size="7">Zatoka Perska</text>
+    <text class="base-label" x="197" y="512" text-anchor="middle" font-size="6.5">Półw. Synaj</text>
+    <text class="base-label" x="71" y="169" text-anchor="middle" font-size="6">Cypr</text>
+    <text class="base-label" x="279" y="289" text-anchor="middle" font-size="5" fill="#2a4010" opacity=".6">Karmel</text>
+
+    <g id="overlay"></g>
+    </svg>
+  </div>
+  <div class="info">
+    <div class="info-badge" id="info-badge">—</div>
+    <div class="info-title" id="info-title">Wybierz okres</div>
+    <div class="info-date" id="info-date">Kliknij przycisk na osi czasu poniżej</div>
+    <div class="info-ref" id="info-ref"></div>
+    <div class="info-body" id="info-body">40 okresów historycznych od Stworzenia do oczekiwania na Mesjasza. Przerywane czarne obrysy terytoriów. Mapa automatycznie zmienia kadr.</div>
+    <div class="info-places"><h4 id="places-label"></h4><div id="places-tags"></div></div>
+  </div>
+</div>
+<div class="tl-wrap"><div class="tl" id="timeline"></div></div>
+</div>
+
+<script>
+// Kalibracja SVG: x=305+(lon-35.6)*32  y=287+(32.8-lat)*54
+// Kinneret(305,287)=32.8°N/35.6°E  Morze Martwe cx=303,cy=358,rx=10,ry=35
+// Karmel headland: x=279 przy y=285 (najdalszy na W punkt wybrzeża Kanaanu)
+
+const ERA=[
+ {n:"Początki",c:"e0"},{n:"Patriarchowie",c:"e1"},{n:"Egipt/Wyjście",c:"e2"},
+ {n:"Podbój/Sędziowie",c:"e3"},{n:"Samuel/Saul",c:"e4"},{n:"Dawid/Salomon",c:"e5"},
+ {n:"Podzielone Królestwo",c:"e6"},{n:"Upadek i Wygnanie",c:"e7"},{n:"Powrót",c:"e8"}
+];
+
+// Skróty terytoriów — wielokrotnie używane
+const tKan={pts:"262,258 316,252 347,265 344,280 323,292 312,303 310,323 310,357 308,380 291,394 274,394 255,380 249,360 252,334 256,309 261,278",fill:"#d4a030",op:.22,label:"Kanaan"};
+const tIzr={pts:"262,258 316,252 347,265 344,280 323,292 312,303 310,323 310,357 308,380 291,394 274,394 255,380 249,360 252,334 256,309 261,278",fill:"#70a040",op:.26,label:"Izrael"};
+const tFil={pts:"245,320 270,315 275,328 279,342 275,358 270,368 250,368 242,355 240,336 242,322",fill:"#c05020",op:.42,label:"Filistia",lx:254,ly:342};
+const tMoab={pts:"313,355 346,347 357,365 352,388 334,398 317,394 313,378 313,358",fill:"#a04020",op:.4,label:"Moab",lx:330,ly:372};
+const tAmmon={pts:"316,294 354,288 366,304 360,328 346,338 328,334 314,322 312,302",fill:"#906030",op:.32,label:"Ammon",lx:338,ly:312};
+const tEdom={pts:"278,388 316,382 326,402 305,422 278,410",fill:"#805010",op:.28,label:"Edom"};
+const tAram={pts:"316,230 380,224 393,253 373,270 350,268 337,252",fill:"#708060",op:.36,label:"Aram",lx:358,ly:250};
+const tIzrN={pts:"263,256 317,250 350,263 348,278 325,290 315,302 345,300 348,324 328,334 312,330 309,330 295,325 271,316 261,297 261,266",fill:"#2878c0",op:.45,label:"Izrael (N)",lx:287,ly:280};
+const tJudaS={pts:"270,328 295,324 309,330 312,358 308,375 292,392 267,392 246,376 241,357 246,338 252,320",fill:"#c08020",op:.45,label:"Juda (S)",lx:268,ly:358};
+
+const P=[
+/* ══════════════════════════════════════════════════════
+   ERA 0 — POCZĄTKI  (1–4)
+══════════════════════════════════════════════════════ */
+{era:0,vb:"340 165 480 380",
+name:"Ogród Eden — Stworzenie",date:"Przed historią zapisaną",ref:"Rdz 1–3",badge:"Stworzenie",
+body:"Bóg stwarza świat i umieszcza Adama i Ewę w ogrodzie nawadnianym przez cztery rzeki — Piszont, Gichon, Tygrys i Eufrat. Eden lokalizowany tradycyjnie w płodnej Mezopotamii.",
+places:["Ogród Eden","Tygrys","Eufrat","Piszont","Gichon"],
+territories:[{pts:"490,255 642,248 675,300 682,378 663,436 596,450 528,428 490,380 485,315",fill:"#40a040",op:.27,label:"Eden / Mezopotamia"}],
+routes:[],
+markers:[{x:578,y:358,label:"Ogród Eden",col:"#186028",type:"site"},{x:596,y:320,label:"Babilon",col:"#7a5010",type:"city",hide:true}],
+annots:[{x:580,y:295,text:"Eufrat i Tygrys",col:"#1a5028",size:9}]},
+
+{era:0,vb:"340 165 480 380",
+name:"Kain, Abel i pierwsze pokolenia",date:"Rdz 4–6",ref:"Rdz 4–6",badge:"Kain i Abel",
+body:"Kain zabija Abla i zostaje wygnany do Krainy Nod na wschód od Edenu. Buduje miasto Enoch. Linia Set: od Adama do Noego. Rośnie zepsucie ludzkości.",
+places:["Kraina Nod","Miasto Enoch (Kain)","Linia Seta","Noe — koniec genealogii"],
+territories:[{pts:"490,255 642,248 675,300 682,378 663,436 596,450 528,428 490,380 485,315",fill:"#708040",op:.2,label:"Mezopotamia"}],
+routes:[{d:"M 578,358 L 620,370 L 655,390",col:"#a04010",dash:"8 4"}],
+markers:[{x:578,y:358,label:"Eden",col:"#186028",type:"site"},{x:655,y:390,label:"Kraina Nod (Kain)",col:"#a03010",type:"city"},{x:596,y:320,label:"Enoch (miasto Kaina)",col:"#703010",type:"city"}],
+annots:[{x:595,y:295,text:"Pierwsze pokolenia",col:"#403010",size:8.5}]},
+
+{era:0,vb:"30 75 790 490",
+name:"Potop i Arka Noego",date:"ok. 3000–2500 p.Chr.",ref:"Rdz 6–9",badge:"Potop",
+body:"Bóg widzi zepsucie. Noe buduje arkę. 40 dni i 40 nocy deszczu. Arka osiada na górach Ararat. Tęcza — znak przymierza. Noe składa ofiarę.",
+places:["Arka Noego","Góra Ararat","Tęcza przymierza"],
+territories:[{pts:"34,96 790,96 790,566 34,566",fill:"#5ba8e0",op:.3,label:"Potop — wody pokrywają ziemię"}],
+routes:[],
+markers:[{x:548,y:97,label:"Góra Ararat (arka)",col:"#286028",type:"mountain"},{x:596,y:320,label:"Niniwa",col:"#506050",type:"city"},{x:638,y:410,label:"Ur",col:"#7a5010",type:"city"}],
+annots:[{x:420,y:148,text:"POTOP — wody pokrywają całą ziemię",col:"#1a3888",size:10}]},
+
+{era:0,vb:"230 100 590 420",
+name:"Babel i rozproszenie narodów",date:"ok. 2500–2000 p.Chr.",ref:"Rdz 10–11",badge:"Babel",
+body:"Potomkowie Noego osiedlają się w Szinear (Babilonia) i budują wieżę sięgającą nieba. Bóg miesza języki i rozprasza narody po całej ziemi. Terach wyrusza z Ur do Charanu.",
+places:["Szinear/Babilonia","Wieża Babel","Ur (rodzina Teracha)","Charan (przystanek)"],
+territories:[{pts:"350,125 762,125 780,220 760,372 720,452 660,478 596,460 524,412 482,348 450,270 416,196",fill:"#608a60",op:.18,label:"Rozproszenie narodów"}],
+routes:[{d:"M 638,410 L 580,370 L 530,320 L 480,268 L 440,192 L 418,132",col:"#a06010",dash:"8 4"}],
+markers:[{x:596,y:320,label:"Babel/Babilon ★",col:"#7a3010",type:"city"},{x:638,y:410,label:"Ur (Terach)",col:"#7a5010",type:"city"},{x:418,y:132,label:"Charan",col:"#7a5010",type:"city"}],
+annots:[{x:596,y:295,text:"WIEŻA BABEL",col:"#7a3010",size:10},{x:528,y:160,text:"← Terach i rodzina",col:"#a06010",size:8}]},
+
+/* ══════════════════════════════════════════════════════
+   ERA 1 — PATRIARCHOWIE  (5–10)
+══════════════════════════════════════════════════════ */
+{era:1,vb:"110 108 570 342",
+name:"Powołanie Abrahama z Ur",date:"ok. 2000–1900 p.Chr.",ref:"Rdz 12–13",badge:"Abraham",
+body:"Bóg wzywa Abrama z Ur — opuść kraj i ród. Przez Charan dociera do Kanaanu. Sychem — pierwsza obietnica ziemi. Betel — ołtarz. Egipt podczas głodu. Powrót do Betelu.",
+places:["Ur (start)","Charan","Sychem","Betel","Egipt"],
+territories:[{pts:"269,260 313,254 344,266 342,280 325,290 316,302 310,322 310,356 308,380 291,394 275,394 257,382 251,364 255,334 257,310 261,278",fill:"#d4a030",op:.25,label:"Kanaan — Ziemia Obiecana"}],
+routes:[{d:"M 638,410 L 600,365 L 566,320 L 530,272 L 490,232 L 460,188 L 418,132",col:"#c06010",dash:"8 4"},{d:"M 418,132 L 380,162 L 352,192 L 330,222 L 316,248 L 296,272 L 291,310 L 289,338 L 288,352",col:"#d09020",dash:"8 4"},{d:"M 288,352 L 270,368 L 248,384 L 218,392 L 185,380",col:"#c07030",dash:"6 3"},{d:"M 185,380 L 242,378 L 268,370 L 288,352",col:"#408040",dash:"6 3"}],
+markers:[{x:638,y:410,label:"Ur (start)",col:"#8a5010",type:"city"},{x:418,y:132,label:"Charan",col:"#8a6000",type:"city"},{x:291,y:310,label:"Sychem",col:"#7a6010",type:"city"},{x:291,y:326,label:"Betel",col:"#7a6010",type:"city"},{x:289,y:352,label:"Hebron/Mamre",col:"#7a6010",type:"city"},{x:185,y:380,label:"Egipt",col:"#8a4010",type:"city"}],
+annots:[{x:440,y:156,text:"Szlak: Ur → Charan → Kanaan → Egipt",col:"#8a4010",size:8}]},
+
+{era:1,vb:"215 254 196 170",
+name:"Abraham — Lot, Sodoma, Przymierze",date:"ok. 1900–1850 p.Chr.",ref:"Rdz 13–22",badge:"Abraham",
+body:"Lot wybiera urodzajną dolinę Jordanu — zamieszkuje Sodomę. Abraham ratuje Lota od Kedorlaomera. Przymierze z Bogiem (Rdz 15). Narodziny Izmaela. Zniszczenie Sodomy i Gomory. Narodziny Izaaka.",
+places:["Mamre/Hebron (Abraham)","Sodoma (Lot)","Gomora","Jordan — równina Kikkar","Góra Moria (Izaak)"],
+territories:[{pts:"295,322 326,318 336,336 330,358 314,370 297,364 291,348 292,332",fill:"#90c060",op:.28,label:"Kikkar ha-Jarden (Lot)"},{pts:"269,260 313,254 325,264 322,280 311,290 310,322 308,360 292,380 274,382 257,372 251,354 254,330 257,308 261,278",fill:"#d4a030",op:.2,label:"Kanaan (Abraham)"}],
+routes:[],
+markers:[{x:289,y:352,label:"Mamre/Hebron ✦",col:"#704010",type:"city"},{x:303,y:390,label:"Sodoma ★",col:"#c02020",type:"city"},{x:300,y:383,label:"Gomora",col:"#c02020",type:"city"},{x:291,y:327,label:"Betel",col:"#7a6010",type:"city"},{x:289,y:337,label:"Góra Moria",col:"#6a4010",type:"mountain"}],
+annots:[{x:291,y:261,text:"KANAAN — Abraham",col:"#6a3010",size:8.5},{x:306,y:350,text:"Sodoma\n(zniszczona)",col:"#c02020",size:7.5}]},
+
+{era:1,vb:"222 270 162 130",
+name:"Izaak — studnie i przymierze w Berszebie",date:"ok. 1850–1800 p.Chr.",ref:"Rdz 24–27",badge:"Izaak",
+body:"Rebeka przybywa z Charanu jako żona Izaaka. Izaak mieszka w Gerarze u Abimelecha. Spory o studnie: Esek, Sitnah, Rechobot. Przymierze w Berszebie. Ezaw i Jakub — błogosławieństwo.",
+places:["Berseba","Gerar (Filistyni)","Studnie: Esek, Sitnah, Rechobot","Hebron/Mamre"],
+territories:[{pts:"269,280 310,275 325,285 322,302 310,320 308,360 292,382 270,384 250,372 244,350 247,320 252,298 260,282",fill:"#d4a030",op:.2,label:"Kanaan"}],
+routes:[],
+markers:[{x:289,y:352,label:"Hebron (Izaak)",col:"#7a5010",type:"city"},{x:279,y:372,label:"Berseba ✦",col:"#6a5010",type:"city"},{x:266,y:344,label:"Gerar",col:"#8a4010",type:"city"},{x:268,y:358,label:"Rechobot (studnia)",col:"#507020",type:"city"}],
+annots:[{x:276,y:278,text:"KANAAN — Izaak",col:"#6a3010",size:8.5}]},
+
+{era:1,vb:"198 118 292 312",
+name:"Jakub — Charan i powrót do Kanaanu",date:"ok. 1800–1750 p.Chr.",ref:"Rdz 28–36",badge:"Jakub",
+body:"Jakub ucieka do Charanu — sen o drabinie w Betel. Służy Labanowi 20 lat. Wraca z 12 synami. Walka z aniołem w Penuel — imię Izrael. Pojednanie z Ezawem. Józef sprzedany w Dotanie.",
+places:["Betel (drabina)","Charan (Laban)","Penuel (walka z aniołem)","Dotan (Józef sprzedany)"],
+territories:[{pts:"269,260 313,254 344,266 342,280 325,290 316,302 310,322 310,356 308,380 291,394 275,394 257,382 251,364 255,334 257,310 261,278",fill:"#d4a030",op:.22,label:"Kanaan Patriarchów"}],
+routes:[{d:"M 277,368 L 291,326 L 320,290 L 352,240 L 392,175 L 418,132",col:"#c05030",dash:"7 3"},{d:"M 418,132 L 376,168 L 338,208 L 316,240 L 318,266 L 315,294 L 308,315 L 291,310 L 290,336 L 288,352",col:"#6040b0",dash:"none"}],
+markers:[{x:418,y:132,label:"Charan (Laban)",col:"#7a5000",type:"city"},{x:291,y:326,label:"Betel (drabina)",col:"#6a5010",type:"city"},{x:308,y:315,label:"Penuel ✦",col:"#5030a0",type:"city"},{x:290,y:299,label:"Dotan",col:"#605010",type:"city"},{x:289,y:352,label:"Hebron",col:"#6a5010",type:"city"}],
+annots:[{x:360,y:148,text:"Jakub: Betel → Charan → powrót z Izraelem",col:"#6040b0",size:8}]},
+
+{era:1,vb:"188 236 240 198",
+name:"Józef — sprzedanie i droga do Egiptu",date:"ok. 1750–1700 p.Chr.",ref:"Rdz 37–38",badge:"Józef",
+body:"Bracia rzucają Józefa do cysterny w Dotanie i sprzedają kupcom izmaelskim za 20 srebrników. Józef prowadzony jest do Egiptu. Potifar kupuje go jako niewolnika.",
+places:["Dotan (pojmanie)","Szlak kupców izmaelskich","Gaza","Memfis/Egipt"],
+territories:[Object.assign({},tKan,{op:.18})],
+routes:[{d:"M 290,299 L 272,318 L 265,340 L 252,356 L 238,364 L 210,370 L 185,375",col:"#c07020",dash:"7 3"}],
+markers:[{x:290,y:299,label:"Dotan (Józef pojmany)",col:"#c05010",type:"city"},{x:263,y:356,label:"Gaza (trakt)",col:"#7a5010",type:"city"},{x:185,y:375,label:"Egipt — Potifar",col:"#8a4010",type:"city"},{x:150,y:400,label:"Memfis",col:"#7a4010",type:"city"}],
+annots:[{x:235,y:340,text:"← Szlak kupców",col:"#c07020",size:8}]},
+
+{era:1,vb:"98 188 342 340",
+name:"Józef — wicekról Egiptu",date:"ok. 1700–1650 p.Chr.",ref:"Rdz 39–50",badge:"Józef",
+body:"Józef w więzieniu tłumaczy sny. Faraon mianuje go wicekrólem. 7 lat urodzaju, 7 lat głodu. Bracia przyjeżdżają po zboże — Józef się ujawnia. 70 dusz Izraela przybywa do Goszen.",
+places:["Goszen","Memfis (dwór faraona)","Hebron (rodzina)","Betsean"],
+territories:[{pts:"112,365 215,358 222,385 202,420 182,448 160,460 138,454 126,434 114,410 112,388",fill:"#c86020",op:.22,label:"Egipt"},Object.assign({},tKan,{op:.18})],
+routes:[{d:"M 288,352 L 265,368 L 238,378 L 210,382 L 185,378",col:"#d0a020",dash:"none"}],
+markers:[{x:185,y:378,label:"Goszen (Izrael)",col:"#8a5010",type:"city"},{x:150,y:400,label:"Memfis ★",col:"#7a4010",type:"city"},{x:288,y:352,label:"Hebron",col:"#7a6010",type:"city"}],
+annots:[{x:183,y:364,text:"70 dusz Izraela w Goszen",col:"#8a5010",size:8.5}]},
+
+/* ══════════════════════════════════════════════════════
+   ERA 2 — EGIPT / WYJŚCIE  (11–15)
+══════════════════════════════════════════════════════ */
+{era:2,vb:"108 168 352 340",
+name:"Mojżesz — 10 plag i Wyjście z Egiptu",date:"ok. 1280–1260 p.Chr.",ref:"Wj 1–15",badge:"Wyjście",
+body:"Izrael w niewoli. Mojżesz urodzony w Egipcie, ucieka do Madianu. Krzew gorejący. 10 plag. Pascha. Przejście przez Morze Czerwone. Faraon ginie w wodach.",
+places:["Ramzes/Goszen","Madian (Mojżesz)","Pi-Hachirot","Morze Czerwone","Góra Synaj"],
+territories:[{pts:"112,365 215,358 222,385 202,420 182,448 160,460 138,454 126,434 114,410 112,388",fill:"#c86020",op:.25,label:"Egipt"},{pts:"218,425 290,420 285,435 264,460 248,484 226,480 206,457 208,428",fill:"#c8a820",op:.22,label:"Pustynia Synaj"}],
+routes:[{d:"M 185,375 L 200,415 L 215,435 L 222,462",col:"#d09020",dash:"7 4"},{d:"M 222,462 L 244,450",col:"#d09020",dash:"7 4"}],
+markers:[{x:185,y:375,label:"Ramzes/Goszen",col:"#8a4010",type:"city"},{x:150,y:400,label:"Memfis",col:"#7a4010",type:"city"},{x:222,y:462,label:"Morze Czerwone ✦",col:"#1a5090",type:"city"}],
+annots:[{x:150,y:358,text:"10 PLAG →",col:"#c04010",size:9},{x:222,y:450,text:"Przejście przez morze",col:"#1a5090",size:8}]},
+
+{era:2,vb:"140 298 266 248",
+name:"Wędrówka przez pustynię — Synaj",date:"ok. 1260–1220 p.Chr.",ref:"Wj 16 – Lb 20",badge:"Pustynia",
+body:"Manna i przepiórki. Góra Synaj — 10 przykazań, Prawo, Przybytek. Złoty cielec. 40 lat wędrówki po pustyni z powodu buntu w Kadesz-Barnea.",
+places:["Mara/Elim","Góra Synaj (Horeb)","Kadesz-Barnea","Tabera","Kibrot-Hataawa"],
+territories:[{pts:"190,298 290,294 294,315 285,358 268,398 244,422 210,432 186,418 178,390 176,356 180,322 184,304",fill:"#c8a820",op:.32,label:"Pustynia Synaj / Negew"}],
+routes:[{d:"M 222,462 L 230,483 L 245,458 L 258,432 L 265,416",col:"#508040",dash:"7 4"},{d:"M 265,416 L 260,400 L 257,385",col:"#608030",dash:"7 4"}],
+markers:[{x:230,y:483,label:"Góra Synaj ▲",col:"#8a6010",type:"mountain"},{x:260,y:400,label:"Kadesz-Barnea",col:"#608030",type:"city"},{x:245,y:458,label:"Elim",col:"#407040",type:"city"},{x:265,y:416,label:"Ezjon-Geber",col:"#507020",type:"city"}],
+annots:[{x:228,y:468,text:"Prawo Boże — Góra Synaj",col:"#8a6010",size:9}]},
+
+{era:2,vb:"226 292 228 188",
+name:"Ostatni etap — Moab, Sihon, Og, Nebo",date:"ok. 1225 p.Chr.",ref:"Lb 20–36; Pwt",badge:"Moab/Nebo",
+body:"Izrael omija Edom. Pokonuje Sihona (amorejski) i Oga (Baszan). Obóz na równinach Moabu. Bileam i jego oślica. Mojżesz widzi Kanaan z Góry Nebo i umiera.",
+places:["Góra Nebo","Równiny Moabu","Królestwo Sihona","Baszan (Og)","Heszbon"],
+territories:[{pts:"308,264 358,260 368,278 362,298 345,310 310,310 306,294 306,268",fill:"#c8a040",op:.32,label:"Baszan (Og)"},{pts:"308,310 352,304 360,322 355,348 338,358 313,352 308,332 308,314",fill:"#b88830",op:.32,label:"Sihon (amorej.)"},{pts:"313,355 346,347 357,365 352,388 334,398 317,394 313,378 313,358",fill:"#a04020",op:.35,label:"Moab"}],
+routes:[{d:"M 260,400 L 278,374 L 290,360 L 298,345 L 304,332 L 308,320",col:"#508040",dash:"6 3"}],
+markers:[{x:312,y:337,label:"Góra Nebo ▲",col:"#6a7020",type:"mountain"},{x:326,y:320,label:"Heszbon (Sihon)",col:"#7a5010",type:"city"},{x:314,y:290,label:"Ashtarot (Og)",col:"#7a5010",type:"city"},{x:308,y:350,label:"Obóz w Moabie",col:"#408030",type:"city"}],
+annots:[{x:320,y:300,text:"← Izrael podbija Transjordanię",col:"#508040",size:8}]},
+
+{era:2,vb:"240 248 152 130",
+name:"Podbój Kanaanu — Jozue (kampania S i N)",date:"ok. 1220–1200 p.Chr.",ref:"Joz 1–12",badge:"Jozue",
+body:"Przekroczenie Jordanu. Jerycho pada cudownie. Kampania południowa: Aj, Gibeon, Lachisz, Hebron. Słońce zatrzymuje się pod Gibeonem. Kampania północna — Chasor spalony.",
+places:["Szittim → Gilgal","Jerycho ★","Aj","Gibeon","Lachisz","Chasor ★"],
+territories:[Object.assign({},tKan,{op:.2})],
+routes:[{d:"M 312,327 L 301,332",col:"#207020",dash:"none"},{d:"M 301,332 L 287,332 L 280,344 L 276,350 L 288,356",col:"#8a7010",dash:"5 3"},{d:"M 301,332 L 301,316 L 298,304 L 305,290 L 307,275",col:"#107090",dash:"5 3"}],
+markers:[{x:312,y:327,label:"Szittim → Jordan",col:"#207020",type:"city"},{x:301,y:332,label:"Jerycho ★",col:"#107020",type:"city"},{x:287,y:332,label:"Gibeon",col:"#507020",type:"city"},{x:291,y:337,label:"Jerozolima",col:"#806010",type:"city"},{x:276,y:350,label:"Lachisz",col:"#506010",type:"city"},{x:307,y:276,label:"Chasor ★",col:"#107090",type:"city"}],
+annots:[{x:286,y:256,text:"PODBÓJ KANAANU",col:"#1a3a18",size:9}]},
+
+{era:2,vb:"240 248 152 130",
+name:"Podział ziemi — 12 pokoleń Izraela",date:"ok. 1200–1180 p.Chr.",ref:"Joz 13–22",badge:"12 Pokoleń",
+body:"Jozue dzieli ziemię między 12 pokoleń. Lewici nie otrzymują terytorium — mają miasta. Sześć miast ucieczki. Ołtarz nad Jordanem — spór o jedność. Mowa pożegnalna Jozuego.",
+places:["Dan","Naftali","Asher","Zebulon","Issachar","Manasses","Efraim","Beniamin","Juda","Symeon","Gad","Ruben"],
+territories:[
+  {pts:"260,246 281,242 287,252 286,265 284,276 282,288 279,300 275,304 270,302 267,290 264,272 260,258",fill:"#3a7aaa",op:.38,label:"Asher",lx:270,ly:272},
+  {pts:"281,242 312,237 321,248 318,260 312,270 308,280 305,287 305,292 299,294 291,293 284,286 283,272 283,254",fill:"#2878bb",op:.38,label:"Naftali",lx:298,ly:263},
+  {pts:"279,292 291,292 299,294 306,292 307,296 303,302 292,304 282,302 279,296",fill:"#34aa56",op:.4,label:"Zebulon",noLbl:true},
+  {pts:"279,296 303,302 307,296 316,300 322,306 319,314 309,316 295,314 281,308 279,300",fill:"#45bb34",op:.4,label:"Issachar",lx:298,ly:306},
+  {pts:"270,305 279,300 279,296 281,308 295,314 309,316 319,314 322,306 323,316 315,325 310,330 296,328 274,326 266,318 268,310",fill:"#8855cc",op:.33,label:"Manasses (Z)",lx:290,ly:316},
+  {pts:"266,324 296,321 311,328 315,336 303,342 289,341 269,337 264,330",fill:"#bb5522",op:.4,label:"Efraim",lx:287,ly:331},
+  {pts:"264,330 280,328 280,340 274,344 263,342 260,336",fill:"#cc9911",op:.42,label:"Dan",noLbl:true},
+  {pts:"280,332 303,328 309,334 308,344 296,347 281,344",fill:"#cc7733",op:.4,label:"Beniamin",lx:292,ly:338},
+  {pts:"264,338 280,332 292,339 292,356 290,375 287,394 266,398 246,381 242,360 244,340",fill:"#bbbb11",op:.36,label:"Juda",lx:268,ly:362},
+  {pts:"258,386 287,380 284,404 268,412 248,404 246,389",fill:"#44aaaa",op:.38,label:"Symeon",lx:265,ly:396},
+  {pts:"313,250 348,246 362,260 358,276 343,290 326,298 315,296 308,284 308,264",fill:"#cc7722",op:.36,label:"Manasses (W)",lx:334,ly:270},
+  {pts:"312,298 338,294 348,308 344,332 330,340 316,336 308,324 310,308",fill:"#44aa55",op:.36,label:"Gad",lx:326,ly:315},
+  {pts:"313,338 340,332 350,348 343,372 325,382 313,370 313,354 313,340",fill:"#cc3333",op:.36,label:"Ruben",lx:325,ly:354},
+],
+routes:[],
+markers:[{x:291,y:337,label:"Jerozolima",col:"#806010",type:"city"},{x:307,y:276,label:"Chasor",col:"#107090",type:"city"},{x:277,y:370,label:"Berseba",col:"#507020",type:"city"}],
+annots:[{x:286,y:256,text:"12 POKOLEŃ IZRAELA",col:"#1a3a18",size:8.5}]},
+
+/* ══════════════════════════════════════════════════════
+   ERA 3 — SĘDZIOWIE  (16–18)
+══════════════════════════════════════════════════════ */
+{era:3,vb:"240 248 152 130",
+name:"Sędziowie: Debora i Gedeon",date:"ok. 1200–1120 p.Chr.",ref:"Sdz 1–9",badge:"Sędziowie",
+body:"Debora i Barak pokonują Jabina i Sisrę pod Megiddo — pieśń triumfu. Jael zabija Siserę. Gedeon z 300 wojownikami pokonuje Madianitów nocą pod Góra Moreha.",
+places:["Megiddo (Debora/Sisera)","Góra Tabor","Góra Moreha (Gedeon)","Ofra","Sychem"],
+territories:[Object.assign({},tIzr,{op:.22,lx:282,ly:298}),Object.assign({},tFil),Object.assign({},tAmmon,{op:.25}),Object.assign({},tMoab,{op:.25})],
+routes:[{d:"M 292,291 L 297,296 L 306,298",col:"#207080",dash:"none"},{d:"M 293,289 L 295,302 L 303,308 L 308,314",col:"#208040",dash:"5 3"}],
+markers:[{x:292,y:291,label:"Megiddo (Debora)",col:"#407030",type:"city"},{x:297,y:283,label:"Mt. Tabor",col:"#305040",type:"mountain"},{x:297,y:302,label:"Mt. Moreha (Gedeon)",col:"#406020",type:"mountain"},{x:291,y:337,label:"Jerozolima",col:"#806010",type:"city"}],
+annots:[{x:293,y:254,text:"Cykl Sędziów: grzech→ucisk→wybawienie",col:"#1a3a18",size:8}]},
+
+{era:3,vb:"240 248 152 130",
+name:"Sędziowie: Jefta, Samson i Filistyni",date:"ok. 1120–1060 p.Chr.",ref:"Sdz 10–16",badge:"Sędziowie",
+body:"Jefta z Gileadu walczy z Ammonitami — tragiczny ślub. Samson — nadludzka siła. Timnah, Aszkelon, Gaza, Delila. Włosy, ślepota, Dagona świątynia. Ostatni sędzia.",
+places:["Mispa Gilead (Jefta)","Timnah (Samson)","Aszkelon","Gaza (Dagona)","Zoraa"],
+territories:[Object.assign({},tIzr,{op:.22,lx:282,ly:298}),Object.assign({},tFil),Object.assign({},tAmmon)],
+routes:[{d:"M 326,292 L 315,305 L 308,315 L 295,322",col:"#c06040",dash:"5 3"}],
+markers:[{x:291,y:337,label:"Jerozolima",col:"#806010",type:"city"},{x:272,y:340,label:"Timnah (ślub Samsona)",col:"#b04010",type:"city"},{x:264,y:355,label:"Gaza ★ (Dagona)",col:"#a03010",type:"city"},{x:265,y:346,label:"Aszkelon",col:"#b04010",type:"city"},{x:326,y:292,label:"Mispa Gilead (Jefta)",col:"#406040",type:"city"}],
+annots:[{x:258,y:338,text:"FILISTIA",col:"#b03010",size:9}]},
+
+{era:3,vb:"240 285 166 138",
+name:"Rut — z Moabu do Betlejem",date:"ok. 1100 p.Chr.",ref:"Rt 1–4",badge:"Rut i Boaz",
+body:"Noemi z mężem przybywa do Moabu — obaj synowie umierają. Rut: 'Gdzie ty pójdziesz, ja pójdę'. Powrót do Betlejem. Rut zbiera kłosy na polu Boaza. Małżeństwo. Obed — dziadek Dawida.",
+places:["Moab (start)","Betlejem (cel)","Pole Boaza","Jordan — granica"],
+territories:[Object.assign({},tMoab),{pts:"270,328 295,324 309,330 312,358 308,375 292,392 267,392 246,376 241,357 246,338 252,320",fill:"#80a040",op:.22,label:"Juda (Betlejem)"}],
+routes:[{d:"M 326,372 L 316,360 L 308,348 L 304,334 L 300,334 L 291,342",col:"#d09020",dash:"7 3"}],
+markers:[{x:326,y:372,label:"Moab (Noemi i Rut)",col:"#904020",type:"city"},{x:291,y:342,label:"Betlejem ★",col:"#706010",type:"city"},{x:288,y:352,label:"Pole Boaza",col:"#408030",type:"city"}],
+annots:[{x:308,y:348,text:"Rut wraca z Noemi →",col:"#d09020",size:8}]},
+
+/* ══════════════════════════════════════════════════════
+   ERA 4 — SAMUEL I SAUL  (19–21)
+══════════════════════════════════════════════════════ */
+{era:4,vb:"240 248 152 130",
+name:"Arka Przymierza i Samuel",date:"ok. 1100–1030 p.Chr.",ref:"1 Sm 1–8",badge:"Samuel",
+body:"Hannah modli się w Szilo — rodzi się Samuel. Arka zdobyta w Afek przez Filistynów. Przechodzi przez Aszdod, Gat, Ekron — plagi. Wraca do Bet-szemesz i Kiriat-Jearim. Samuel gromadzi Izrael w Mispie.",
+places:["Szilo","Afek/Eben-Ezer","Aszdod","Gat","Ekron","Bet-szemesz","Kiriat-Jearim","Mispa"],
+territories:[Object.assign({},tIzr,{op:.22}),Object.assign({},tFil)],
+routes:[{d:"M 293,314 L 277,310 L 268,314",col:"#d0a010",dash:"7 3"},{d:"M 268,314 L 259,332 L 267,344 L 271,338 L 276,344 L 283,340",col:"#d03010",dash:"5 3"},{d:"M 283,340 L 290,333",col:"#50a020",dash:"5 3"}],
+markers:[{x:293,y:314,label:"Szilo",col:"#606010",type:"city"},{x:268,y:314,label:"Afek ★",col:"#a03010",type:"city"},{x:259,y:332,label:"Aszdod",col:"#b03010",type:"city"},{x:267,y:344,label:"Gat",col:"#b03010",type:"city"},{x:276,y:344,label:"Bet-szemesz",col:"#507020",type:"city"},{x:283,y:340,label:"Kiriat-Jearim",col:"#507020",type:"city"},{x:289,y:332,label:"Mispa",col:"#406030",type:"city"}],
+annots:[{x:272,y:298,text:"← Arka zdobyta w Afek",col:"#a03010",size:8}]},
+
+{era:4,vb:"240 248 155 132",
+name:"Królestwo Saula — namaszczenie i wojny",date:"ok. 1050–1020 p.Chr.",ref:"1 Sm 9–20",badge:"Saul",
+body:"Samuel namaszcza Saula z Beniamina. Saul ratuje Jabesz-Gilead od Ammonitów. Jonatan bije Filistynów w Michmas. Amalekici. Dawid namaszczony, gra na harfie, zabija Goliata w Dolinie Ela.",
+places:["Gibea (stolica)","Michmas (Jonatan)","Góra Gilboa","Jabesz-Gilead","Dolina Ela (Goliat)"],
+territories:[{pts:"263,256 285,254 311,260 332,257 348,266 350,278 338,290 323,300 330,314 325,327 315,337 312,349 308,375 292,390 270,392 249,377 241,356 244,330 250,308 257,285 260,270",fill:"#aa7ac8",op:.38,label:"Królestwo Saula",lx:279,ly:298},Object.assign({},tFil)],
+routes:[{d:"M 289,334 L 288,320 L 292,308 L 302,296",col:"#c06040",dash:"5 3"},{d:"M 289,334 L 289,314 L 298,302 L 313,296 L 326,292",col:"#8040c0",dash:"6 3"}],
+markers:[{x:289,y:334,label:"Gibea (Saul)",col:"#7040a0",type:"city"},{x:293,y:313,label:"Michmas (Jonatan)",col:"#6040a0",type:"city"},{x:299,y:296,label:"Góra Gilboa ▲",col:"#a02020",type:"mountain"},{x:326,y:292,label:"Jabesz-Gilead",col:"#5040a0",type:"city"},{x:276,y:344,label:"Dolina Ela",col:"#806010",type:"city"}],
+annots:[{x:271,y:278,text:"KRÓLESTWO SAULA",col:"#5030a0",size:8.5}]},
+
+{era:4,vb:"240 248 152 132",
+name:"Dawid — namaszczenie, ucieczka, Siklag",date:"ok. 1020–1010 p.Chr.",ref:"1 Sm 16–31",badge:"Dawid w ucieczce",
+body:"Dawid namaszczony w Betlejem. Zabija Goliata. Przyjaźń z Jonatanem. Ucieka przed zazdrosnym Saulem: Adullam, En-Gedi, Masada, Zif. Udaje szaleńca w Gat. Siklag — służba u Achicha. Saul ginie na Gilboa.",
+places:["Betlejem","Adullam","En-Gedi","Masada","Zif","Gat","Siklag","Góra Gilboa"],
+territories:[Object.assign({},tFil,{op:.3}),Object.assign({},tMoab,{op:.25})],
+routes:[{d:"M 291,342 L 282,347 L 305,362 L 307,374 L 295,363 L 270,374",col:"#805020",dash:"6 3"}],
+markers:[{x:291,y:342,label:"Betlejem",col:"#705010",type:"city"},{x:282,y:347,label:"Adullam",col:"#705020",type:"city"},{x:305,y:362,label:"En-Gedi",col:"#506030",type:"city"},{x:307,y:374,label:"Masada",col:"#605020",type:"city"},{x:295,y:363,label:"Zif",col:"#605020",type:"city"},{x:270,y:374,label:"Siklag",col:"#7a4010",type:"city"},{x:267,y:344,label:"Gat",col:"#a04010",type:"city"},{x:299,y:296,label:"Gilboa ▲",col:"#a02020",type:"mountain"}],
+annots:[{x:284,y:262,text:"Dawid ucieka przed Saulem",col:"#705010",size:8}]},
+
+/* ══════════════════════════════════════════════════════
+   ERA 5 — DAWID I SALOMON  (22–27)
+══════════════════════════════════════════════════════ */
+{era:5,vb:"244 268 150 126",
+name:"Dawid w Hebronie — 7 lat nad Judą",date:"ok. 1010–1003 p.Chr.",ref:"2 Sm 1–4",badge:"Dawid: Juda",
+body:"Dawid opłakuje Saula i Jonatana. Namaszczony na króla Judy w Hebronie. Na północy — Isz-Boszet syn Saula rządzi resztą Izraela. Bitwa u sadzawki w Gibeonie. Joab zabija Abnera. Isz-Boszet zamordowany.",
+places:["Hebron (Dawid–Juda)","Machanaim (Isz-Boszet)","Gibeon (bitwa)","Baal-Perasim"],
+territories:[{pts:"264,338 280,332 292,339 292,356 290,375 287,394 266,398 246,381 242,360 244,340",fill:"#c8a020",op:.45,label:"Juda (Dawid)"},{pts:"262,256 316,250 350,263 348,278 325,290 315,302 345,300 348,330 310,330 295,325 271,316 261,297 261,266",fill:"#a0a0c0",op:.32,label:"Izrael (Isz-Boszet)"}],
+routes:[],
+markers:[{x:289,y:356,label:"Hebron ✦ (Dawid)",col:"#704010",type:"city"},{x:327,y:317,label:"Machanaim (Isz-Boszet)",col:"#606080",type:"city"},{x:287,y:332,label:"Gibeon (bitwa)",col:"#406040",type:"city"}],
+annots:[{x:267,y:360,text:"JUDA",col:"#c08010",size:11},{x:287,y:278,text:"IZRAEL (Isz-Boszet)",col:"#6060a0",size:8}]},
+
+{era:5,vb:"245 268 150 126",
+name:"Dawid zdobywa Jerozolimę — Arka do miasta",date:"ok. 1003–990 p.Chr.",ref:"2 Sm 5–6",badge:"Dawid: Jerozolima",
+body:"Dawid królem całego Izraela. Oblega Jebus (Jerozolimę) i zdobywa 'Twierdzę Syjonu'. Buduje pałac. Bije Filistynów dwukrotnie (Dolina Refaim). Arka Przymierza uroczyście wprowadzona do Jerozolimy.",
+places:["Jerozolima ★","Twierdza Syjonu","Dolina Refaim","Baal-Perasim","Tyr (Hiram)"],
+territories:[{pts:"260,256 316,250 350,263 348,278 325,290 315,302 310,322 310,356 308,374 292,392 267,394 244,378 236,354 242,308 252,268",fill:"#1880c0",op:.32,label:"Zjednoczone Królestwo"}],
+routes:[{d:"M 291,337 L 291,342",col:"#d0a020",dash:"none"}],
+markers:[{x:291,y:337,label:"Jerozolima ★ (zdobyta)",col:"#5a2a00",type:"city"},{x:278,y:310,label:"Dolina Refaim",col:"#606010",type:"city"},{x:284,y:263,label:"Tyr (Hiram)",col:"#304060",type:"city"}],
+annots:[{x:283,y:274,text:"DAWID: Jerozolima stolicą",col:"#0050a0",size:8.5}]},
+
+{era:5,vb:"172 152 314 228",
+name:"Dawid — podboje: Berseba do Chamat",date:"ok. 1000–970 p.Chr.",ref:"2 Sm 7–12; 1 Krn",badge:"Królestwo Dawida",
+body:"Dawid bije Filistynów, Moabitów, Edomitów, Ammonitów (Rabba zdobyta). Aram-Soba — Hadadezer pokonany. Aram-Damaszek składa hołd. Królestwo od Berseby/Synaju do Chamat nad Orontesem.",
+places:["Hebron→Jerozolima","Rabba (Ammon)","Damaszek (hołd)","Chamat (granica N)","Ezjon-Geber"],
+territories:[{pts:"260,218 352,213 408,244 400,272 360,286 347,278 324,292 310,325 308,375 292,392 267,394 244,378 236,354 242,308 251,268",fill:"#1880c0",op:.36,label:"Królestwo Dawida",lx:281,ly:296},Object.assign({},tAram,{label:"Aram (hołd)",op:.28}),{pts:"294,390 336,380 347,402 323,418 292,406",fill:"#805010",op:.26,label:"Edom"},Object.assign({},tMoab,{op:.28})],
+routes:[],
+markers:[{x:291,y:337,label:"Jerozolima ★",col:"#5a2a00",type:"city"},{x:337,y:310,label:"Rabba (zdobyta)",col:"#703010",type:"city"},{x:322,y:249,label:"Damaszek",col:"#505020",type:"city"},{x:341,y:216,label:"Chamat (granica N)",col:"#0060a8",type:"city"},{x:278,y:370,label:"Berseba",col:"#3060a0",type:"city"}],
+annots:[{x:283,y:202,text:"KRÓLESTWO DAWIDA: Berseba → Chamat",col:"#0050a0",size:9}]},
+
+{era:5,vb:"240 248 165 138",
+name:"Dawid — Urjasz, spis ludności, kara",date:"ok. 990–970 p.Chr.",ref:"2 Sm 11–24",badge:"Dawid: grzechy",
+body:"Dawid i Batszeba. Urjasz wysłany na śmierć pod Rabbę. Prorok Natan — 'Ty jesteś tym człowiekiem'. Śmierć dziecka. Amnon i Tamar. Spis ludności — zaraza. Klepisko Arauny (Arawna) — przyszłe miejsce Świątyni.",
+places:["Jerozolima","Rabba/Ammon (Urjasz)","Klepisko Arauny","Betlejem (Dawid się kryje)"],
+territories:[{pts:"260,218 352,213 408,244 400,272 360,286 347,278 324,292 310,325 308,375 292,392 267,394 244,378 236,354 242,308 251,268",fill:"#1880c0",op:.28,label:"Królestwo Dawida",lx:281,ly:296}],
+routes:[{d:"M 291,337 L 316,322 L 337,310",col:"#c04010",dash:"5 3"}],
+markers:[{x:291,y:337,label:"Jerozolima",col:"#5a2a00",type:"city"},{x:337,y:310,label:"Rabba (Urjasz ginie)",col:"#a03010",type:"city"},{x:291,y:334,label:"Klepisko Arauny",col:"#806020",type:"site"}],
+annots:[{x:291,y:260,text:"DAWID: grzechy i ich konsekwencje",col:"#a03010",size:8}]},
+
+{era:5,vb:"240 248 160 135",
+name:"Bunt Absaloma — Dawid ucieka",date:"ok. 980–975 p.Chr.",ref:"2 Sm 13–19",badge:"Absalom",
+body:"Absalom zabija Amnona, ucieka do Geszur 3 lata. Wraca. Kradnie serca ludu. Wywołuje bunt z Hebronu. Dawid ucieka za Jordan do Machanaim. Las Efraim — śmierć Absaloma. Dawid wraca do Jerozolimy.",
+places:["Baal-Hazor","Geszur (ucieczka)","Hebron (bunt)","Machanaim (Dawid)","Las Efraim (śmierć Absaloma)"],
+territories:[{pts:"260,218 358,213 408,244 400,272 360,286 345,278 323,292 310,326 308,375 292,392 267,394 244,378 236,354 242,308 251,268",fill:"#1880c0",op:.28,label:"Królestwo Dawida",lx:281,ly:296}],
+routes:[{d:"M 293,329 L 289,337 L 278,360",col:"#b03020",dash:"7 3"},{d:"M 291,337 L 308,326 L 320,318 L 327,317",col:"#f0a020",dash:"6 3"}],
+markers:[{x:293,y:329,label:"Baal-Hazor (Absalom)",col:"#903020",type:"city"},{x:322,y:268,label:"Geszur",col:"#603060",type:"city"},{x:289,y:356,label:"Hebron (bunt)",col:"#a03010",type:"city"},{x:327,y:317,label:"Machanaim (Dawid)",col:"#805010",type:"city"},{x:291,y:337,label:"Jerozolima ★",col:"#5a2a00",type:"city"}],
+annots:[{x:283,y:260,text:"Bunt Absaloma — Dawid na wygnaniu",col:"#903010",size:8}]},
+
+{era:5,vb:"240 248 162 135",
+name:"Salomon — Świątynia, handel i chwała",date:"ok. 970–930 p.Chr.",ref:"1 Krl 1–11",badge:"Salomon",
+body:"Salomon namaszczony. Modlitwa o mądrość. Budowa Pierwszej Świątyni (7 lat). Pałac (13 lat). Trakt handlowy z Ophir i Ezjon-Geber. Kopalnie miedzi. Wizyta królowej Saby. Odwrót od Boga — żony i bałwany.",
+places:["Jerozolima ★ (Świątynia)","Tyr (Hiram — cedrowy)","Ezjon-Geber (handel)","Baalat","Tadmor"],
+territories:[{pts:"260,218 358,213 408,244 400,272 360,286 345,278 323,292 310,326 308,375 292,392 267,394 244,378 236,354 242,308 251,268",fill:"#c08808",op:.38,label:"Królestwo Salomona",lx:281,ly:296},{pts:"340,214 382,208 396,234 388,254 367,262 352,252 342,232",fill:"#a06808",op:.24,label:"Aram (hołd)"}],
+routes:[{d:"M 291,337 L 278,370 L 272,394",col:"#d09020",dash:"6 3"}],
+markers:[{x:291,y:337,label:"Jerozolima ★ (Świątynia)",col:"#5a2a00",type:"city"},{x:284,y:263,label:"Tyr (Hiram)",col:"#304060",type:"city"},{x:273,y:396,label:"Ezjon-Geber",col:"#4a5010",type:"city"},{x:341,y:216,label:"Chamat (granica)",col:"#0060a8",type:"city"}],
+annots:[{x:283,y:202,text:"KRÓLESTWO SALOMONA — złoty wiek",col:"#5a2800",size:9}]},
+
+/* ══════════════════════════════════════════════════════
+   ERA 6 — PODZIELONE KRÓLESTWO  (28–32)
+══════════════════════════════════════════════════════ */
+{era:6,vb:"238 240 170 140",
+name:"Podział Królestwa — Jeroboam i Roboam",date:"ok. 930–870 p.Chr.",ref:"1 Krl 12–16",badge:"Podział",
+body:"Roboam traci 10 pokoleń przez bezwzględność. Jeroboam zakłada Królestwo Izraela ze stolicą w Sychem, potem Tirsie, potem Samarii. Złote cielce w Dan i Betel. Omri buduje Samarię. Eliasz wystąpi wkrótce.",
+places:["Samaria ★ (Izrael N)","Jerozolima ★ (Juda S)","Dan (złote cielce)","Betel (złote cielce)"],
+territories:[Object.assign({},tIzrN),Object.assign({},tJudaS),Object.assign({},tAram,{op:.3}),{pts:"260,252 280,248 283,260 277,268 261,268",fill:"#406070",op:.3,label:"Fenicja",noLbl:true},Object.assign({},tFil,{op:.3})],
+routes:[],
+markers:[{x:288,y:308,label:"Samaria ★",col:"#104890",type:"city"},{x:291,y:337,label:"Jerozolima ★",col:"#7a4a00",type:"city"},{x:322,y:249,label:"Damaszek",col:"#506040",type:"city"},{x:307,y:263,label:"Dan",col:"#104890",type:"city"},{x:291,y:327,label:"Betel",col:"#104890",type:"city"}],
+annots:[{x:281,y:275,text:"IZRAEL",col:"#1050a0",size:11},{x:262,y:360,text:"JUDA",col:"#8a5000",size:11}]},
+
+{era:6,vb:"238 234 175 144",
+name:"Eliasz — Karmel, Horeb, Nabot",date:"ok. 870–850 p.Chr.",ref:"1 Krl 17–21",badge:"Eliasz",
+body:"Eliasz zamknął niebo na 3,5 roku. Karmiony przez kruki. Wdowa w Sarefacie. Ogień z nieba na Górze Karmel — 450 proroków Baala. Ucieczka do Horebu. Cichy głos. Winnnica Nabota — sąd Boży.",
+places:["Góra Karmel","Jizreel (Jezebel/Nabot)","Horeb (Eliasz)","Sarefat (wdowa)","Samaria"],
+territories:[Object.assign({},tIzrN,{op:.32}),Object.assign({},tJudaS,{op:.32}),Object.assign({},tAram,{op:.35})],
+routes:[{d:"M 281,283 L 290,296 L 288,308",col:"#2060c0",dash:"none"}],
+markers:[{x:281,y:283,label:"Mt. Karmel ★",col:"#204060",type:"city"},{x:292,y:291,label:"Jizreel (Nabot)",col:"#703010",type:"city"},{x:288,y:308,label:"Samaria",col:"#104890",type:"city"},{x:280,y:260,label:"Sarefat",col:"#305060",type:"city"},{x:322,y:249,label:"Damaszek",col:"#506040",type:"city"},{x:291,y:337,label:"Jerozolima",col:"#7a4a00",type:"city"}],
+annots:[{x:276,y:270,text:"ELIASZ",col:"#1050a0",size:9}]},
+
+{era:6,vb:"238 234 175 144",
+name:"Elizeusz i Aram-Damaszek",date:"ok. 850–800 p.Chr.",ref:"2 Krl 2–13",badge:"Elizeusz",
+body:"Ognisty rydwan zabiera Eliasza. Elizeusz czyni cuda: oczyszcza Naamana z trądu (Jordan), wskrzesza syna kobiety z Szunem, karmi 100 mężów, widzi niebiańskie wojsko w Dotan. Walki o Ramot-Gilead.",
+places:["Szunem (cud)","Dotan (otoczony)","Ramot-Gilead","Jordan (Naaman)","Samaria"],
+territories:[Object.assign({},tIzrN,{op:.32}),Object.assign({},tJudaS,{op:.32}),Object.assign({},tAram,{op:.4})],
+routes:[{d:"M 332,293 L 320,298 L 311,307 L 309,317 L 296,322",col:"#c04020",dash:"6 3"}],
+markers:[{x:292,y:303,label:"Szunem (Elizeusz)",col:"#305040",type:"city"},{x:290,y:299,label:"Dotan",col:"#506020",type:"city"},{x:332,y:293,label:"Ramot-Gilead",col:"#904030",type:"city"},{x:322,y:249,label:"Damaszek",col:"#506040",type:"city"},{x:288,y:308,label:"Samaria",col:"#104890",type:"city"}],
+annots:[{x:282,y:270,text:"ELIZEUSZ",col:"#1050a0",size:9},{x:361,y:248,text:"ARAM",col:"#508060",size:9}]},
+
+{era:6,vb:"238 240 170 140",
+name:"Amos i Ozeasz — prorocy Izraela Północnego",date:"ok. 760–720 p.Chr.",ref:"Am; Oz; Mi",badge:"Prorocy",
+body:"Amos — pasterz z Tekoa, przepowiada sąd w Betel i Samarii. Ozeasz — jego małżeństwo symbolem niewierności Izraela wobec Boga. Micheasz z Moreshetu. Przestrogi przed Asyrią.",
+places:["Tekoa (Amos)","Samaria (kazania)","Betel (sąd)","Moresheth (Micheasz)"],
+territories:[Object.assign({},tIzrN,{op:.35}),Object.assign({},tJudaS,{op:.35})],
+routes:[{d:"M 291,342 L 288,334 L 288,322 L 289,308",col:"#8040a0",dash:"6 3"}],
+markers:[{x:291,y:342,label:"Tekoa (Amos)",col:"#704030",type:"city"},{x:288,y:308,label:"Samaria (kazania)",col:"#8040a0",type:"city"},{x:291,y:327,label:"Betel (sąd Boży)",col:"#8040a0",type:"city"},{x:291,y:337,label:"Jerozolima",col:"#7a4a00",type:"city"}],
+annots:[{x:281,y:275,text:"IZRAEL — ostrzeżenia",col:"#8040a0",size:9},{x:262,y:360,text:"JUDA",col:"#8a5000",size:9}]},
+
+{era:6,vb:"228 128 492 360",
+name:"Asyria niszczy Izrael Północny",date:"800–722 p.Chr.",ref:"2 Krl 14–17; Iz 10",badge:"Asyria",
+body:"Tiglat-Pileser III bierze pierwszy trybut. Szalmaneser V oblega Samarię 3 lata. Sargon II (722 p.Chr.) deportuje 10 pokoleń do Asyrii. Królestwo Izraela znika z historii. Nowe ludy zasiedlają Samarię — Samarytanie.",
+places:["Niniwa (Asyria)","Samaria (ZDOBYTA 722)","Jerozolima (przetrwała)","Lachisz","Deportacja"],
+territories:[{pts:"263,256 317,250 350,263 348,278 325,290 315,302 312,322 296,322 271,316 261,297 261,266",fill:"#c02010",op:.52,label:"Izrael — PODBITY"},{pts:"270,328 295,324 309,330 312,358 308,375 292,392 267,392 246,376 241,357 246,338 252,320",fill:"#c08020",op:.35,label:"Juda (ocalała)"},{pts:"456,142 592,135 628,190 615,262 552,282 495,270 454,216",fill:"#b02010",op:.28,label:"Imperium Asyryjskie"}],
+routes:[{d:"M 548,155 L 510,195 L 468,238 L 428,262 L 390,272 L 350,268 L 316,298",col:"#c02010",dash:"none"}],
+markers:[{x:548,y:157,label:"Niniwa (Asyria)",col:"#900000",type:"city"},{x:288,y:308,label:"Samaria (ZDOBYTA)",col:"#c00000",type:"city"},{x:291,y:337,label:"Jerozolima (ocalała)",col:"#8a5000",type:"city"}],
+annots:[{x:492,y:178,text:"IMPERIUM ASYRYJSKIE",col:"#900000",size:9.5},{x:292,y:298,text:"↓ DEPORTACJA",col:"#c00000",size:8.5}]},
+
+/* ══════════════════════════════════════════════════════
+   ERA 7 — UPADEK I WYGNANIE  (33–37)
+══════════════════════════════════════════════════════ */
+{era:7,vb:"222 198 380 274",
+name:"Ezechiasz i Sennacheryb (701 p.Chr.)",date:"715–686 p.Chr.",ref:"2 Krl 18–19; Iz 36–37",badge:"Ezechiasz",
+body:"Ezechiasz oczyszcza kult. Budownie kanału Siloe. Sennacheryb oblega Lachisz (reliefy asyryjskie!). Raszak bluźni pod murami Jerozolimy. Modlitwa Ezechiasza — anioł niszczy 185 000 Asyryjczyków. Słońce cofa się.",
+places:["Jerozolima (modlitwa)","Lachisz (oblężenie)","Kanał Siloe","Niniwa (Sennacheryb)"],
+territories:[{pts:"270,328 295,324 309,330 312,358 308,375 292,392 267,392 246,376 241,357 246,338 252,320",fill:"#c08820",op:.48,label:"Juda (Ezechiasz)"},{pts:"456,142 592,135 628,190 615,262 552,282 495,270 454,216",fill:"#b02010",op:.22,label:"Asyria"}],
+routes:[{d:"M 548,157 L 480,210 L 430,240 L 385,265 L 348,282 L 315,305 L 296,326 L 291,337",col:"#a02010",dash:"7 3"}],
+markers:[{x:291,y:337,label:"Jerozolima ✦",col:"#7a4000",type:"city"},{x:277,y:349,label:"Lachisz (oblężony)",col:"#a02010",type:"city"},{x:548,y:157,label:"Niniwa",col:"#900000",type:"city"}],
+annots:[{x:350,y:260,text:"← Sennacheryb maszeruje na Jerozolimę",col:"#a02010",size:8}]},
+
+{era:7,vb:"214 192 376 276",
+name:"Reformy Jozjasza — bitwa pod Megiddo",date:"640–609 p.Chr.",ref:"2 Krl 22–23; Jr 1",badge:"Jozjasz",
+body:"Hilkiasz odnajduje Księgę Prawa. Jozjasz: wielka reforma — niszczy ołtarze bożków w Judzie i Izraelu. Odnowiona Pascha (najwspanialsza od czasu Sędziów). Jozjasz ginie pod Megiddo walcząc z Faraonem Necho.",
+places:["Jerozolima (reforma)","Betel (zburzony ołtarz)","Megiddo ★ (śmierć)","Karkemisz"],
+territories:[{pts:"270,328 295,324 309,330 312,358 308,375 292,392 267,392 246,376 241,357 246,338 252,320",fill:"#c08820",op:.45,label:"Juda (reforma)"}],
+routes:[{d:"M 291,337 L 289,314 L 290,302 L 290,299",col:"#a04010",dash:"6 3"}],
+markers:[{x:291,y:337,label:"Jerozolima (reforma)",col:"#7a4000",type:"city"},{x:291,y:327,label:"Betel (zburzony)",col:"#906040",type:"city"},{x:290,y:299,label:"Megiddo ★ (Jozjasz)",col:"#c02020",type:"city"}],
+annots:[{x:268,y:332,text:"JUDA — Reforma",col:"#7a4000",size:11},{x:291,y:260,text:"Megiddo — koniec Jozjasza",col:"#c02020",size:7.5}]},
+
+{era:7,vb:"198 162 484 338",
+name:"Nabuchodonozor podbija Judę (605–586)",date:"605–586 p.Chr.",ref:"2 Krl 24–25; Jr; Ez",badge:"Babilon",
+body:"Karkemisz 605 — Babilon nową potęgą. Pierwsze deportacje (Daniel). Jojakim, Jojakin, Sedecjasz. Jeremiasz ostrzega — list do jeńców. 586: Jerozolima zburzona, Świątynia spalona. Lachisz — ostatni sygnał ogniowy.",
+places:["Jerozolima (ZBURZONA)","Lachisz","Babilon","Karkemisz (605)","Megiddo"],
+territories:[{pts:"270,328 295,324 309,330 312,358 308,375 292,392 267,392 246,376 241,357 246,338 252,320",fill:"#c08820",op:.5,label:"Królestwo Judy"},{pts:"496,252 640,245 672,298 682,378 665,435 598,450 530,428 493,378 485,312",fill:"#b03010",op:.22,label:"Babilonia"}],
+routes:[{d:"M 592,320 L 510,298 L 438,290 L 380,298 L 348,318 L 314,336",col:"#c04010",dash:"7 3"}],
+markers:[{x:291,y:337,label:"Jerozolima",col:"#7a4000",type:"city"},{x:592,y:320,label:"Babilon",col:"#a03000",type:"city"},{x:277,y:349,label:"Lachisz",col:"#7a5000",type:"city"},{x:408,y:130,label:"Karkemisz (605)",col:"#a04000",type:"city"}],
+annots:[{x:267,y:332,text:"JUDA",col:"#7a4000",size:11},{x:560,y:273,text:"BABILON",col:"#a03000",size:11}]},
+
+{era:7,vb:"198 188 494 340",
+name:"Wygnanie Babilońskie",date:"586–538 p.Chr.",ref:"2 Krl 25; Ez; Ps 137",badge:"Wygnanie",
+body:"'Nad rzekami Babilonu — tam siedzieliśmy i płakali' (Ps 137). Ezechiel prorokuje nad Chebar. Juda leży odłogiem. Jeremiasz udaje się do Egiptu. 70 lat wygnania.",
+places:["Jerozolima (RUINY)","Babilon","Rzeka Chebar","Egipt (Jeremiasz)"],
+territories:[{pts:"270,328 295,324 309,330 312,358 308,375 292,392 267,392 246,376 241,357 246,338 252,320",fill:"#604030",op:.62,label:"Juda — ODŁOGIEM"},{pts:"496,252 640,245 672,298 682,378 665,435 598,450 530,428 493,378 485,312",fill:"#b03010",op:.4,label:"Imperium Babilońskie"}],
+routes:[{d:"M 291,337 L 348,310 L 435,298 L 520,308 L 592,320",col:"#c05010",dash:"none"}],
+markers:[{x:291,y:337,label:"Jerozolima (RUINY)",col:"#6a2000",type:"city"},{x:592,y:320,label:"Babilon ★",col:"#a03000",type:"city"},{x:660,y:342,label:"Suza",col:"#404090",type:"city"},{x:185,y:378,label:"Egipt (Jeremiasz)",col:"#7a4010",type:"city"}],
+annots:[{x:292,y:323,text:"Świątynia ZNISZCZONA",col:"#c02000",size:8.5},{x:553,y:278,text:"BABILON",col:"#a03000",size:11}]},
+
+{era:7,vb:"352 180 458 352",
+name:"Daniel i Ezechiel — prorocy na wygnaniu",date:"605–535 p.Chr.",ref:"Ez 1–48; Dn 1–12",badge:"Daniel/Ezechiel",
+body:"Daniel na dworze Nabuchodonozora — sen o posągu, 3 w piecu ognistym, napis na ścianie, lwia jama. Wizje o imperium przyszłości. Ezechiel nad rzeką Chebar — wizja rydwanu, suche kości, nowa Świątynia.",
+places:["Babilon (Daniel)","Rzeka Chebar (Ezechiel)","Suza (Daniel wiz.)","Nippur"],
+territories:[{pts:"496,252 640,245 672,298 682,378 665,435 598,450 530,428 493,378 485,312",fill:"#b03010",op:.35,label:"Imperium Babilońskie"}],
+routes:[],
+markers:[{x:592,y:320,label:"Babilon ★ (Daniel)",col:"#a03000",type:"city"},{x:620,y:348,label:"Rzeka Chebar (Ezechiel)",col:"#304090",type:"city"},{x:660,y:342,label:"Suza (wizje Daniela)",col:"#404090",type:"city"}],
+annots:[{x:553,y:278,text:"BABILON",col:"#a03000",size:11},{x:592,y:300,text:"Daniel i Ezechiel — prorocy na wygnaniu",col:"#304090",size:8}]},
+
+/* ══════════════════════════════════════════════════════
+   ERA 8 — POWRÓT  (38–40)
+══════════════════════════════════════════════════════ */
+{era:8,vb:"226 145 550 390",
+name:"Powrót — Cyrus i Zorobabel (538–515)",date:"538–515 p.Chr.",ref:"Ezd 1–6; Ag; Za",badge:"Powrót",
+body:"Cyrus Wielki zdobywa Babilon (539). Edykt — Żydzi mogą wrócić do ojczyzny. Zorobabel prowadzi 49 000 wygnańców. Odbudowa ołtarza i fundamentów Świątyni. Opór Samarytan. Zachęta Aggeusza i Zachariasza. Świątynia ukończona 515 p.Chr.",
+places:["Persepolis (Cyrus)","Babilon (wyjście)","Jehud (prowincja)","Jerozolima (Świątynia)"],
+territories:[{pts:"380,108 778,108 795,205 762,360 728,432 668,464 596,450 522,404 480,338 448,264 416,200",fill:"#4848a0",op:.2,label:"Imperium Perskie"},{pts:"270,323 309,319 313,342 309,368 291,382 268,378 256,360 257,336 261,325",fill:"#60b040",op:.52,label:"Jehud (prowincja)"}],
+routes:[{d:"M 660,342 L 592,320 L 510,296 L 432,288 L 358,298 L 312,328",col:"#408040",dash:"7 4"}],
+markers:[{x:291,y:337,label:"Jerozolima (Świątynia!)",col:"#206020",type:"city"},{x:592,y:320,label:"Babilon",col:"#7a4000",type:"city"},{x:660,y:342,label:"Suza/Persja",col:"#303880",type:"city"},{x:710,y:390,label:"Persepolis",col:"#282870",type:"city"}],
+annots:[{x:542,y:162,text:"IMPERIUM PERSKIE",col:"#383890",size:10},{x:445,y:287,text:"← Powrót 538",col:"#308040",size:9}]},
+
+{era:8,vb:"245 192 490 342",
+name:"Ezdrasz, Nehemiasz i mury Jerozolimy",date:"458–420 p.Chr.",ref:"Ezd 7–10; Ne 1–13",badge:"Ezdrasz/Nehemiasz",
+body:"Ezdrasz (458) — Prawo ogłoszone publicznie, reformy małżeńskie. Nehemiasz — kubikularzy Artakserksesa, słyszy o ruinach Jerozolimy. Budowa murów w 52 dni mimo oporu Sanballata. Nehemiasz namiestnikiem.",
+places:["Suza (Nehemiasz)","Jerozolima (mury)","Samaria (Sanballat)","Jerycho"],
+territories:[{pts:"380,108 778,108 795,205 762,360 728,432 668,464 596,450 522,404 480,338 448,264 416,200",fill:"#4848a0",op:.15,label:"Imperium Perskie"},{pts:"270,323 309,319 313,342 309,368 291,382 268,378 256,360 257,336 261,325",fill:"#60b040",op:.45,label:"Jehud"}],
+routes:[{d:"M 660,342 L 580,330 L 490,320 L 420,315 L 358,310 L 313,328",col:"#308040",dash:"7 4"}],
+markers:[{x:291,y:337,label:"Jerozolima — MURY",col:"#206020",type:"city"},{x:660,y:342,label:"Suza (Nehemiasz)",col:"#303880",type:"city"},{x:288,y:308,label:"Samaria (Sanballat)",col:"#a04030",type:"city"}],
+annots:[{x:291,y:290,text:"Mury w 52 dni",col:"#206020",size:8.5},{x:490,y:280,text:"← Nehemiasz i Ezdrasz",col:"#308040",size:8}]},
+
+{era:8,vb:"350 150 530 415",
+name:"Estera w Suzie — ocalenie Żydów",date:"483–473 p.Chr.",ref:"Est 1–10",badge:"Estera",
+body:"Żydowska sierota Hadasa (Estera) zostaje królową Persji. Haman knuje zagładę wszystkich Żydów — losy (purim). Mordechai przekonuje Esterę: 'A któż wie, czy nie po to osiągnęłaś godność królewską?' Ocalenie ludu.",
+places:["Suza (pałac Artakserksesa)","Brama miasta (Mordechai)","Gibeah","Persepolis"],
+territories:[{pts:"480,165 778,165 790,260 762,360 728,432 668,464 596,450 522,404 490,338 468,260 460,200",fill:"#4848a0",op:.25,label:"Imperium Perskie"}],
+routes:[],
+markers:[{x:660,y:342,label:"Suza ★ (Estera i Mordechai)",col:"#5030a0",type:"city"},{x:710,y:390,label:"Persepolis",col:"#282870",type:"city"},{x:592,y:320,label:"Babilon",col:"#7a5000",type:"city"}],
+annots:[{x:660,y:295,text:"SUZA — dwór Artakserksesa",col:"#5030a0",size:9},{x:660,y:310,text:"'Estera — po to jesteś'",col:"#6040b0",size:8}]},
+
+{era:8,vb:"240 248 150 128",
+name:"Oczekiwanie na Mesjasza",date:"400–4 p.Chr.",ref:"Ml; 1Mch; Herod",badge:"Między Testamentami",
+body:"Malachi — ostatni prorok. Aleksander Wielki (333). Ptolemeusze, Seleucydzi, Machabeusze — walka o Świątynię. Rzym wchodzi do Jerozolimy (Pompejusz 63 p.Chr.). Herod Wielki przebudowuje Świątynię. W ciszy nocy — narodziny Mesjasza w Betlejem.",
+places:["Jerozolima (Świątynia Heroda)","Betlejem ★","Qumran (esseńczycy)","Jezioro Genezaret"],
+territories:[{pts:"263,258 317,252 348,264 346,280 324,291 313,304 310,327 308,376 292,392 267,394 248,377 241,356 244,330 250,308 257,286 260,270",fill:"#506090",op:.35,label:"Judea (Hasmoneusze/Herod)"}],
+routes:[],
+markers:[{x:291,y:337,label:"Jerozolima (Świątynia Heroda)",col:"#304070",type:"city"},{x:291,y:342,label:"Betlejem ★",col:"#5a2a00",type:"city"},{x:310,y:370,label:"Qumran",col:"#405020",type:"city"},{x:277,y:370,label:"Berseba",col:"#404060",type:"city"}],
+annots:[{x:286,y:264,text:"JUDEA — oczekiwanie na Mesjasza",col:"#304070",size:8}]},
+];
+
+// ═══ TIMELINE ═══
+const tl=document.getElementById('timeline');
+let lastEra=-1;
+P.forEach((p,i)=>{
+  if(p.era!==lastEra){
+    if(lastEra>=0){
+      const sep=document.createElement('div');
+      sep.className='tl-sep';
+      sep.innerHTML=`<div class="tl-sep-line"></div><div class="tl-sep-label">${ERA[p.era].n}</div><div class="tl-sep-line"></div>`;
+      tl.appendChild(sep);
+    } else {
+      const lbl=document.createElement('div');
+      lbl.className='tl-sep';
+      lbl.innerHTML=`<div class="tl-sep-line"></div><div class="tl-sep-label">${ERA[p.era].n}</div><div class="tl-sep-line"></div>`;
+      tl.appendChild(lbl);
+    }
+    lastEra=p.era;
+  }
+  const b=document.createElement('button');
+  b.className=`tl-btn ${ERA[p.era].c}`; b.id='tl'+i;
+  const yr=p.date.split('–')[0].replace('ok. ','').replace(' p.Chr.',' p.').replace('Przed','—');
+  b.innerHTML=`<strong>${i+1}</strong><br>${p.name}<br><span style="font-size:7.5px;opacity:.68">${yr}</span>`;
+  b.onclick=()=>showPeriod(i);
+  tl.appendChild(b);
+});
+
+// ═══ ViewBox animation ═══
+let curVB=[0,0,820,580];
+function animateVB(target){
+  const tArr=target.split(' ').map(Number);
+  const start=[...curVB];
+  const t0=performance.now(), dur=700;
+  function step(now){
+    const t=Math.min((now-t0)/dur,1);
+    const e=t<.5?2*t*t:-1+(4-2*t)*t;
+    const vb=start.map((s,i)=>s+(tArr[i]-s)*e);
+    document.getElementById('map').setAttribute('viewBox',vb.map(v=>v.toFixed(1)).join(' '));
+    if(t<1)requestAnimationFrame(step); else curVB=tArr;
+  }
+  requestAnimationFrame(step);
+}
+
+// ═══ SHOW PERIOD ═══
+let cur=-1;
+function showPeriod(n){
+  if(cur===n)return; cur=n;
+  const p=P[n];
+  document.querySelectorAll('.tl-btn').forEach((b,i)=>b.classList.toggle('active',i===n));
+  document.getElementById('info-badge').textContent=p.badge;
+  document.getElementById('info-title').textContent=p.name;
+  document.getElementById('info-date').textContent=p.date;
+  document.getElementById('info-ref').textContent='📖 '+p.ref;
+  document.getElementById('info-body').textContent=p.body;
+  document.getElementById('places-label').textContent='Kluczowe miejsca';
+  document.getElementById('places-tags').innerHTML=p.places.map(pl=>`<span class="tag">${pl}</span>`).join('');
+  if(p.vb) animateVB(p.vb);
+
+  const vbArr=(p.vb||"0 0 820 580").split(' ').map(Number);
+  const vbW=vbArr[2];
+  const fS=Math.min(1, vbW/820);
+  const mFs=Math.max(3.6, fS*8.5);
+  const tFs=Math.max(2.8, fS*7.2);
+  const aFs=Math.max(5.0, fS*9.2);
+  const sW =Math.max(0.4, fS*2.0);
+  const mOx=Math.max(1.6, fS*5.0);
+  const mOy=Math.max(1.6, fS*4.0);
+  const bW =(Math.max(0.28, fS*0.85)).toFixed(2);
+  const dL =(Math.max(1.4, fS*5.0)).toFixed(1);
+  const dG =(Math.max(0.9, fS*2.8)).toFixed(1);
+
+  const ov=document.getElementById('overlay');
+  Array.from(ov.children).forEach(c=>c.style.opacity='0');
+  setTimeout(()=>{
+    ov.innerHTML='';
+    (p.territories||[]).forEach(t=>{
+      const el=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+      el.setAttribute('points',t.pts); el.setAttribute('fill',t.fill); el.setAttribute('opacity',0);
+      el.setAttribute('stroke','rgba(18,12,0,0.55)');
+      el.setAttribute('stroke-dasharray',`${dL} ${dG}`);
+      el.setAttribute('stroke-width',bW); el.setAttribute('stroke-linejoin','round');
+      ov.appendChild(el);
+      requestAnimationFrame(()=>{el.style.transition='opacity .55s';el.style.opacity=t.op;});
+      if(t.label && !t.noLbl){
+        let cx,cy;
+        if(t.lx!==undefined){cx=t.lx;cy=t.ly;}
+        else{const pp=t.pts.split(' ').map(s=>s.split(',').map(Number));cx=pp.reduce((a,v)=>a+v[0],0)/pp.length;cy=pp.reduce((a,v)=>a+v[1],0)/pp.length;}
+        const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+        lbl.setAttribute('x',cx);lbl.setAttribute('y',cy);lbl.setAttribute('text-anchor','middle');
+        lbl.setAttribute('font-size',tFs);lbl.setAttribute('fill',t.fill);lbl.setAttribute('font-family','sans-serif');
+        lbl.setAttribute('font-weight','600');lbl.setAttribute('stroke','rgba(255,255,255,0.82)');
+        lbl.setAttribute('stroke-width',(sW*0.75).toFixed(2));lbl.setAttribute('paint-order','stroke');
+        lbl.setAttribute('opacity',0);lbl.textContent=t.label;
+        ov.appendChild(lbl);
+        requestAnimationFrame(()=>{lbl.style.transition='opacity .7s';lbl.style.opacity='.92';});
+      }
+    });
+    (p.routes||[]).forEach(r=>{
+      const el=document.createElementNS('http://www.w3.org/2000/svg','path');
+      el.setAttribute('d',r.d);el.setAttribute('fill','none');el.setAttribute('stroke',r.col||'#c07000');
+      el.setAttribute('stroke-width',Math.max(0.7,fS*2.4));el.setAttribute('stroke-dasharray',r.dash||'7 4');
+      el.setAttribute('stroke-linecap','round');el.setAttribute('marker-end','url(#arr)');
+      el.setAttribute('context-stroke',r.col||'#c07000');el.setAttribute('opacity',0);
+      ov.appendChild(el);
+      requestAnimationFrame(()=>{el.style.transition='opacity .6s';el.style.opacity='1';});
+    });
+    (p.markers||[]).forEach(m=>{
+      const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('opacity',0);
+      if(!m.hide){
+        const r=m.type==='mountain'?Math.max(1.8,fS*3.8):Math.max(1.6,fS*3.2);
+        const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+        c.setAttribute('cx',m.x);c.setAttribute('cy',m.y);c.setAttribute('r',r);
+        c.setAttribute('fill',m.col||'#2a1a00');c.setAttribute('stroke','rgba(255,255,255,0.9)');
+        c.setAttribute('stroke-width',Math.max(0.35,fS*1.1));g.appendChild(c);
+        if(m.type==='mountain'){
+          const tri=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+          tri.setAttribute('points',`${m.x},${m.y-r*2.4} ${m.x-r*1.2},${m.y} ${m.x+r*1.2},${m.y}`);
+          tri.setAttribute('fill',m.col||'#2a1a00');tri.setAttribute('opacity','.65');
+          tri.setAttribute('stroke','rgba(255,255,255,0.8)');tri.setAttribute('stroke-width',Math.max(0.25,fS*0.7));
+          g.appendChild(tri);
+        }
+      }
+      const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+      lbl.setAttribute('x',m.x+mOx);lbl.setAttribute('y',m.y-mOy);
+      lbl.setAttribute('font-size',mFs);lbl.setAttribute('fill',m.col||'#2a1a00');
+      lbl.setAttribute('font-family','sans-serif');lbl.setAttribute('font-weight','400');
+      lbl.setAttribute('stroke','rgba(255,255,255,0.9)');lbl.setAttribute('stroke-width',sW);
+      lbl.setAttribute('paint-order','stroke');lbl.textContent=m.label;
+      g.appendChild(lbl);ov.appendChild(g);
+      requestAnimationFrame(()=>{g.style.transition='opacity .5s';g.style.opacity='1';});
+    });
+    (p.annots||[]).forEach(a=>{
+      const annotSz=a.size?Math.max(aFs*0.7,a.size*fS):aFs;
+      const el=document.createElementNS('http://www.w3.org/2000/svg','text');
+      el.setAttribute('x',a.x);el.setAttribute('y',a.y);el.setAttribute('text-anchor','middle');
+      el.setAttribute('font-size',annotSz);el.setAttribute('fill',a.col||'#2a1a00');
+      el.setAttribute('font-family','sans-serif');el.setAttribute('font-weight','600');
+      el.setAttribute('stroke','rgba(255,255,255,0.82)');el.setAttribute('stroke-width',(sW*1.1).toFixed(2));
+      el.setAttribute('paint-order','stroke');el.setAttribute('opacity',0);el.textContent=a.text;
+      ov.appendChild(el);
+      requestAnimationFrame(()=>{el.style.transition='opacity .6s';el.style.opacity='1';});
+    });
+  },310);
+}
+
+showPeriod(0);
+</script>
+</body>
+</html>
